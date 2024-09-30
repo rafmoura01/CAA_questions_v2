@@ -2,10 +2,19 @@ import streamlit as st
 import pandas as pd
 
 # Título do aplicativo
-st.title("Bora passar na prova , Lateral!! :smile:")
+st.title("Bora passar na prova , Lateral!! 😄")
 
 # Instruções
 st.write("Por favor, escolha uma disciplina e o número do questionário no menu lateral.")
+
+# Dicionário com os textos personalizados para cada disciplina
+subtitulos_disciplinas = {
+    "CAO": "Características Organizacionais",
+    "GP": "Gestão de Projetos",
+    "GCP": "Gestão Patrimonial",
+    "LE": "Liderança e Equipes",
+    "PAI": "Processos Avaliativos e Inovação"
+}
 
 # Função para carregar o arquivo CSV com as perguntas
 def carregar_perguntas(arquivo_csv):
@@ -28,27 +37,28 @@ st.sidebar.title("Selecione as opções")
 
 # Lista de disciplinas disponíveis
 disciplinas = {
-    "CAO": "CAO",
-    "História": "historia",
-    "Geografia": "geografia"
+    "CAO - Características Organizacionais": "CAO",
+    "GP - Gestão de Projetos": "GP",
+    "GCP - Gestão Patrimonial": "GCP",
+    "LE - Liderança e Equipes": "LE",
+    "PAI - Processos Avaliativos e Inovação": "PAI"
 }
 
 # Seleção da disciplina no menu lateral
-disciplina_escolhida = st.sidebar.selectbox("Escolha a disciplina:", list(disciplinas.keys()))
+disciplina_escolhida = st.sidebar.selectbox("Escolha a disciplina:", ["Selecione..."] + list(disciplinas.keys()))
 
-# Texto explicativo para o usuário escolher o número do questionário
-st.sidebar.write("Escolha o número do questionário:")
+# Somente mostra a seleção do número do questionário se uma disciplina for escolhida
+if disciplina_escolhida != "Selecione...":
+    numero_questionario = st.sidebar.selectbox("Escolha o número do questionário:", ["Selecione..."] + list(range(1, 11)))
+else:
+    numero_questionario = None
 
-# Variável para armazenar o número do questionário selecionado
-numero_questionario = None
+# Verifica se a disciplina e o número do questionário foram escolhidos
+if disciplina_escolhida != "Selecione..." and numero_questionario != "Selecione...":
+    # Exibe o subtítulo com a disciplina escolhida e o número do questionário
+    subtitulo = subtitulos_disciplinas.get(disciplina_escolhida, disciplina_escolhida)
+    st.subheader(f"Disciplina: {subtitulo} | Questionário: {numero_questionario}")
 
-# Botões para seleção do número do questionário (exemplo com os números 1 a 5)
-for i in range(1, 6):  # Você pode ajustar esse intervalo conforme necessário
-    if st.sidebar.button(f"{i}"):
-        numero_questionario = i
-
-# Verifica se o número do questionário foi selecionado
-if numero_questionario is not None:
     # Gerar o nome do arquivo CSV com base na disciplina e no número do questionário
     nome_arquivo = f"perguntas_{disciplinas[disciplina_escolhida]}_{numero_questionario}.csv"
 
@@ -56,24 +66,38 @@ if numero_questionario is not None:
     perguntas_df = carregar_perguntas(nome_arquivo)
 
     if perguntas_df is not None:
-        #st.write(f"Carregando o questionário de **{disciplina_escolhida}**, número **{numero_questionario}**...")
+        # Se o número do questionário mudar, resetar as respostas e acertos
+        if f'respostas_{numero_questionario}' not in st.session_state:
+            st.session_state[f'respostas_{numero_questionario}'] = {}
+            st.session_state.acertos = 0
 
-        # Dicionário para armazenar as respostas do usuário
-        respostas_usuario = {}
+        respostas_usuario = st.session_state[f'respostas_{numero_questionario}']
 
-        # Usando expander para colapsar perguntas, caso o questionário seja longo
-        #with st.expander("Clique para ver as perguntas"):
-            # Loop para gerar as perguntas e alternativas a partir do DataFrame
+        # Loop para gerar as perguntas e alternativas a partir do DataFrame
         for index, row in perguntas_df.iterrows():
             pergunta = row['pergunta']
             alternativas = [row['alternativa1'], row['alternativa2'], row['alternativa3'], row['alternativa4']]
-            respostas_usuario[pergunta] = st.radio(pergunta, alternativas)
+
+            # Pergunta com número da questão, em negrito, e com fonte maior
+            st.markdown(
+                f"<strong style='font-size: 18px; margin-bottom: 5px;'>Questão {index + 1}: {pergunta}</strong>",
+                unsafe_allow_html=True
+            )
+
+            # Alternativas, sem índice inicial definido
+            resposta_selecionada = st.radio(
+                "", 
+                alternativas, 
+                key=f'pergunta_{index}'
+            )
+
+            respostas_usuario[pergunta] = resposta_selecionada
 
         # Botão para enviar respostas
         if st.button('Enviar'):
             # Variável para contar acertos
             acertos = 0
-            
+
             # Verificando as respostas
             for index, row in perguntas_df.iterrows():
                 pergunta = row['pergunta']
@@ -81,9 +105,12 @@ if numero_questionario is not None:
                 if respostas_usuario[pergunta] == correta:
                     acertos += 1
             
+            # Armazenar o número de acertos no session_state
+            st.session_state.acertos = acertos
+
             # Exibindo o resultado total
-            st.success(f"Você acertou {acertos} de {len(perguntas_df)} perguntas.")
-            
+            st.success(f"Você acertou {st.session_state.acertos} de {len(perguntas_df)} perguntas.")
+
             # Mostrando feedback individual para cada pergunta
             for index, row in perguntas_df.iterrows():
                 pergunta = row['pergunta']
@@ -93,4 +120,4 @@ if numero_questionario is not None:
                 else:
                     st.write(f"{pergunta} - Incorreto ❌")
 else:
-    st.sidebar.warning("Por favor, selecione o número do questionário para continuar.")
+    st.sidebar.warning("Por favor, selecione a disciplina e o número do questionário para continuar.")
