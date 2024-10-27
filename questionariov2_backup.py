@@ -1,4 +1,3 @@
-import os
 import streamlit as st
 import pandas as pd
 
@@ -7,9 +6,6 @@ st.title("Bora passar na prova , Lateral!! 😄")
 
 # Instruções
 st.write("Por favor, escolha uma disciplina e o número do questionário no menu lateral.")
-
-# Adicione o caminho para a sua imagem
-imagem_caminho = "Image_sgt.jpg"
 
 # Dicionário com os textos personalizados para cada disciplina
 subtitulos_disciplinas = {
@@ -28,28 +24,16 @@ def carregar_perguntas(arquivo_csv):
         return df
     except FileNotFoundError:
         st.error(f"Arquivo '{arquivo_csv}' não encontrado. Verifique o nome do arquivo.")
-        st.stop()
+        st.stop()  # Para o código aqui caso o arquivo não exista
     except pd.errors.EmptyDataError:
         st.error("O arquivo está vazio. Por favor, adicione perguntas.")
-        st.stop()
+        st.stop()  # Para o código se o arquivo estiver vazio
     except Exception as e:
         st.error(f"Erro ao carregar o arquivo CSV: {e}")
-        st.stop()
-
-# Função para identificar os números de questionários disponíveis
-def obter_numeros_questionarios(disciplina_abreviacao):
-    caminho_arquivos = "C:/Users/COMARA/Documents/RAFAEL/PYTHON/STREAMLIT"
-    arquivos = os.listdir(caminho_arquivos)
-    numeros = [
-        int(nome.split('_')[-1].split('.')[0])
-        for nome in arquivos
-        if nome.startswith(f"perguntas_{disciplina_abreviacao}_") and nome.endswith(".csv")
-    ]
-    return sorted(numeros)
+        st.stop()  # Para o código em caso de outro erro
 
 # Menu lateral para seleção de disciplina
 st.sidebar.title("Selecione as opções :arrow_down:")
-
 
 # Lista de disciplinas disponíveis
 disciplinas = {
@@ -65,23 +49,18 @@ disciplina_escolhida = st.sidebar.selectbox("Escolha a disciplina:", ["Selecione
 
 # Somente mostra a seleção do número do questionário se uma disciplina for escolhida
 if disciplina_escolhida != "Selecione...":
-    abreviacao = disciplinas[disciplina_escolhida]
-    questionarios_disponiveis = obter_numeros_questionarios(abreviacao)
-    numero_questionario = st.sidebar.selectbox("Escolha o número do questionário:", ["Selecione..."] + questionarios_disponiveis)
+    numero_questionario = st.sidebar.selectbox("Escolha o número do questionário:", ["Selecione..."] + list(range(1, 8)))
 else:
     numero_questionario = None
-
-# Inserir a imagem na área do menu lateral, abaixo do seletor de questionário
-st.sidebar.image(imagem_caminho, caption="Boa sorte no seu estudo!", use_column_width=True)
 
 # Verifica se a disciplina e o número do questionário foram escolhidos
 if disciplina_escolhida != "Selecione..." and numero_questionario != "Selecione...":
     # Exibe o subtítulo com a disciplina escolhida e o número do questionário
-    subtitulo = subtitulos_disciplinas.get(abreviacao, disciplina_escolhida)
+    subtitulo = subtitulos_disciplinas.get(disciplina_escolhida, disciplina_escolhida)
     st.subheader(f"Disciplina: {subtitulo} | Questionário: {numero_questionario}")
 
     # Gerar o nome do arquivo CSV com base na disciplina e no número do questionário
-    nome_arquivo = f"C:/Users/COMARA/Documents/RAFAEL/PYTHON/STREAMLIT/perguntas_{abreviacao}_{numero_questionario}.csv"
+    nome_arquivo = f"perguntas_{disciplinas[disciplina_escolhida]}_{numero_questionario}.csv"
 
     # Carregar as perguntas do arquivo CSV correspondente
     perguntas_df = carregar_perguntas(nome_arquivo)
@@ -111,6 +90,7 @@ if disciplina_escolhida != "Selecione..." and numero_questionario != "Selecione.
                 alternativas, 
                 key=f'pergunta_{index}',
                 label_visibility='collapsed'
+
             )
 
             respostas_usuario[pergunta] = resposta_selecionada

@@ -8,9 +8,6 @@ st.title("Bora passar na prova , Lateral!! 😄")
 # Instruções
 st.write("Por favor, escolha uma disciplina e o número do questionário no menu lateral.")
 
-# Adicione o caminho para a sua imagem
-imagem_caminho = "Image_sgt.jpg"
-
 # Dicionário com os textos personalizados para cada disciplina
 subtitulos_disciplinas = {
     "CAO": "Características Organizacionais",
@@ -50,7 +47,6 @@ def obter_numeros_questionarios(disciplina_abreviacao):
 # Menu lateral para seleção de disciplina
 st.sidebar.title("Selecione as opções :arrow_down:")
 
-
 # Lista de disciplinas disponíveis
 disciplinas = {
     "CAO - Características Organizacionais": "CAO",
@@ -70,9 +66,6 @@ if disciplina_escolhida != "Selecione...":
     numero_questionario = st.sidebar.selectbox("Escolha o número do questionário:", ["Selecione..."] + questionarios_disponiveis)
 else:
     numero_questionario = None
-
-# Inserir a imagem na área do menu lateral, abaixo do seletor de questionário
-st.sidebar.image(imagem_caminho, caption="Boa sorte no seu estudo!", use_column_width=True)
 
 # Verifica se a disciplina e o número do questionário foram escolhidos
 if disciplina_escolhida != "Selecione..." and numero_questionario != "Selecione...":

@@ -1,0 +1,10 @@
+1- Questão de resposta única; 
+2- Questão de afirmação incompleta; 
+3- Questão de resposta múltipla; 
+4- Questão de foco negativo; 
+5- Questão de asserção e razão; 
+6- Questão de lacuna; 
+7- Questão de interpretação; 
+8- Questão de associação; 
+9- Questão de ordenação ou seriação; 
+10- Questão de alternativas constantes.
