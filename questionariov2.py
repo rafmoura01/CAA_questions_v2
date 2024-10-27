@@ -1,6 +1,7 @@
 import os
 import streamlit as st
 import pandas as pd
+import requests
 
 # Título do aplicativo
 st.title("Bora passar na prova , Lateral!! 😄")
@@ -8,8 +9,8 @@ st.title("Bora passar na prova , Lateral!! 😄")
 # Instruções
 st.write("Por favor, escolha uma disciplina e o número do questionário no menu lateral.")
 
-# Adicione o caminho para a sua imagem
-imagem_caminho = "Image_sgt.jpg"
+# URL da imagem no GitHub
+imagem_caminho = "https://raw.githubusercontent.com/rafmoura01/CAA_questions_v2/main/Image_sgt.jpg"
 
 # Dicionário com os textos personalizados para cada disciplina
 subtitulos_disciplinas = {
@@ -36,20 +37,29 @@ def carregar_perguntas(arquivo_csv):
         st.error(f"Erro ao carregar o arquivo CSV: {e}")
         st.stop()
 
-# Função para identificar os números de questionários disponíveis
+# Função para identificar os números de questionários disponíveis no GitHub
 def obter_numeros_questionarios(disciplina_abreviacao):
-    caminho_arquivos = "C:/Users/COMARA/Documents/RAFAEL/PYTHON/STREAMLIT"
-    arquivos = os.listdir(caminho_arquivos)
-    numeros = [
-        int(nome.split('_')[-1].split('.')[0])
-        for nome in arquivos
-        if nome.startswith(f"perguntas_{disciplina_abreviacao}_") and nome.endswith(".csv")
-    ]
-    return sorted(numeros)
+    # URL da API GitHub para listar conteúdo do diretório
+    url = "https://api.github.com/repos/rafmoura01/CAA_questions_v2/contents/"
+    
+    try:
+        response = requests.get(url)
+        response.raise_for_status()  # Verifica se a requisição teve sucesso
+        arquivos = response.json()  # Obtem a lista de arquivos como JSON
+        
+        # Filtra os arquivos com base na disciplina e no formato .csv
+        numeros = [
+            int(arquivo['name'].split('_')[-1].split('.')[0])
+            for arquivo in arquivos
+            if arquivo['name'].startswith(f"perguntas_{disciplina_abreviacao}_") and arquivo['name'].endswith(".csv")
+        ]
+        return sorted(numeros)
+    except requests.exceptions.RequestException as e:
+        st.error(f"Erro ao acessar o repositório do GitHub: {e}")
+        return []
 
 # Menu lateral para seleção de disciplina
 st.sidebar.title("Selecione as opções :arrow_down:")
-
 
 # Lista de disciplinas disponíveis
 disciplinas = {
@@ -80,8 +90,8 @@ if disciplina_escolhida != "Selecione..." and numero_questionario != "Selecione.
     subtitulo = subtitulos_disciplinas.get(abreviacao, disciplina_escolhida)
     st.subheader(f"Disciplina: {subtitulo} | Questionário: {numero_questionario}")
 
-    # Gerar o nome do arquivo CSV com base na disciplina e no número do questionário
-    nome_arquivo = f"C:/Users/COMARA/Documents/RAFAEL/PYTHON/STREAMLIT/perguntas_{abreviacao}_{numero_questionario}.csv"
+    # Gerar o URL do arquivo CSV com base na disciplina e no número do questionário
+    nome_arquivo = f"https://raw.githubusercontent.com/rafmoura01/CAA_questions_v2/main/perguntas_{abreviacao}_{numero_questionario}.csv"
 
     # Carregar as perguntas do arquivo CSV correspondente
     perguntas_df = carregar_perguntas(nome_arquivo)
