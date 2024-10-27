@@ -37,6 +37,9 @@ def carregar_perguntas(url_csv):
     except pd.errors.EmptyDataError:
         st.error("O arquivo está vazio. Por favor, adicione perguntas.")
         st.stop()
+    except pd.errors.ParserError as e:
+        st.error(f"Erro ao analisar o arquivo CSV: {e}")
+        st.stop()
     except Exception as e:
         st.error(f"Erro ao carregar o arquivo CSV: {e}")
         st.stop()
@@ -96,6 +99,9 @@ if disciplina_escolhida != "Selecione..." and numero_questionario != "Selecione.
 
     # Gerar o URL do arquivo CSV com base na disciplina e no número do questionário
     nome_arquivo = f"https://raw.githubusercontent.com/rafmoura01/CAA_questions_v2/main/perguntas_{abreviacao}_{numero_questionario}.csv"
+    
+    # Mostrar a URL para verificação
+    st.write("URL do CSV:", nome_arquivo)
 
     # Carregar as perguntas do arquivo CSV correspondente
     perguntas_df = carregar_perguntas(nome_arquivo)
