@@ -1,17 +1,11 @@
-import os
 import streamlit as st
 import pandas as pd
-import requests
-from io import StringIO
 
 # Título do aplicativo
-st.title("Bora passar na prova, Lateral!! 😄")
+st.title("Bora passar na prova , Lateral!! 😄")
 
 # Instruções
 st.write("Por favor, escolha uma disciplina e o número do questionário no menu lateral.")
-
-# URL da imagem no GitHub
-imagem_caminho = "https://raw.githubusercontent.com/rafmoura01/CAA_questions_v2/main/Image_sgt.jpg"
 
 # Dicionário com os textos personalizados para cada disciplina
 subtitulos_disciplinas = {
@@ -22,48 +16,21 @@ subtitulos_disciplinas = {
     "PAI": "Processos Avaliativos e Inovação"
 }
 
-# Função para carregar o arquivo CSV com as perguntas a partir de uma URL do GitHub
-def carregar_perguntas(url_csv):
+# Função para carregar o arquivo CSV com as perguntas
+def carregar_perguntas(arquivo_csv):
     try:
-        response = requests.get(url_csv)
-        response.raise_for_status()  # Verifica se a requisição teve sucesso
-        # Lê o conteúdo diretamente em um DataFrame
-        df = pd.read_csv(StringIO(response.text), encoding='utf-8', sep=';')
+        df = pd.read_csv(arquivo_csv, encoding='utf-8', sep=';')
         df.columns = df.columns.str.strip()  # Remove espaços dos nomes das colunas
         return df
-    except requests.exceptions.RequestException as e:
-        st.error(f"Erro ao baixar o arquivo CSV: {e}")
-        st.stop()
+    except FileNotFoundError:
+        st.error(f"Arquivo '{arquivo_csv}' não encontrado. Verifique o nome do arquivo.")
+        st.stop()  # Para o código aqui caso o arquivo não exista
     except pd.errors.EmptyDataError:
         st.error("O arquivo está vazio. Por favor, adicione perguntas.")
-        st.stop()
-    except pd.errors.ParserError as e:
-        st.error(f"Erro ao analisar o arquivo CSV: {e}")
-        st.stop()
+        st.stop()  # Para o código se o arquivo estiver vazio
     except Exception as e:
         st.error(f"Erro ao carregar o arquivo CSV: {e}")
-        st.stop()
-
-# Função para identificar os números de questionários disponíveis no GitHub
-def obter_numeros_questionarios(disciplina_abreviacao):
-    # URL da API GitHub para listar conteúdo do diretório
-    url = "https://api.github.com/repos/rafmoura01/CAA_questions_v2/contents/"
-    
-    try:
-        response = requests.get(url)
-        response.raise_for_status()  # Verifica se a requisição teve sucesso
-        arquivos = response.json()  # Obtém a lista de arquivos como JSON
-        
-        # Filtra os arquivos com base na disciplina e no formato .csv
-        numeros = [
-            int(arquivo['name'].split('_')[-1].split('.')[0])
-            for arquivo in arquivos
-            if arquivo['name'].startswith(f"perguntas_{disciplina_abreviacao}_") and arquivo['name'].endswith(".csv")
-        ]
-        return sorted(numeros)
-    except requests.exceptions.RequestException as e:
-        st.error(f"Erro ao acessar o repositório do GitHub: {e}")
-        return []
+        st.stop()  # Para o código em caso de outro erro
 
 # Menu lateral para seleção de disciplina
 st.sidebar.title("Selecione as opções :arrow_down:")
@@ -82,26 +49,18 @@ disciplina_escolhida = st.sidebar.selectbox("Escolha a disciplina:", ["Selecione
 
 # Somente mostra a seleção do número do questionário se uma disciplina for escolhida
 if disciplina_escolhida != "Selecione...":
-    abreviacao = disciplinas[disciplina_escolhida]
-    questionarios_disponiveis = obter_numeros_questionarios(abreviacao)
-    numero_questionario = st.sidebar.selectbox("Escolha o número do questionário:", ["Selecione..."] + questionarios_disponiveis)
+    numero_questionario = st.sidebar.selectbox("Escolha o número do questionário:", ["Selecione..."] + list(range(1, 8)))
 else:
     numero_questionario = None
-
-# Inserir a imagem na área do menu lateral, abaixo do seletor de questionário
-st.sidebar.image(imagem_caminho, caption="Boa sorte no seu estudo!", use_column_width=True)
 
 # Verifica se a disciplina e o número do questionário foram escolhidos
 if disciplina_escolhida != "Selecione..." and numero_questionario != "Selecione...":
     # Exibe o subtítulo com a disciplina escolhida e o número do questionário
-    subtitulo = subtitulos_disciplinas.get(abreviacao, disciplina_escolhida)
+    subtitulo = subtitulos_disciplinas.get(disciplina_escolhida, disciplina_escolhida)
     st.subheader(f"Disciplina: {subtitulo} | Questionário: {numero_questionario}")
 
-    # Gerar o URL do arquivo CSV com base na disciplina e no número do questionário
-    nome_arquivo = f"https://raw.githubusercontent.com/rafmoura01/CAA_questions_v2/main/perguntas_{abreviacao}_{numero_questionario}.csv"
-    
-    # Mostrar a URL para verificação
-    st.write("URL do CSV:", nome_arquivo)
+    # Gerar o nome do arquivo CSV com base na disciplina e no número do questionário
+    nome_arquivo = f"perguntas_{disciplinas[disciplina_escolhida]}_{numero_questionario}.csv"
 
     # Carregar as perguntas do arquivo CSV correspondente
     perguntas_df = carregar_perguntas(nome_arquivo)
@@ -131,6 +90,7 @@ if disciplina_escolhida != "Selecione..." and numero_questionario != "Selecione.
                 alternativas, 
                 key=f'pergunta_{index}',
                 label_visibility='collapsed'
+
             )
 
             respostas_usuario[pergunta] = resposta_selecionada
