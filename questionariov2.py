@@ -2,9 +2,10 @@ import os
 import streamlit as st
 import pandas as pd
 import requests
+from io import StringIO
 
 # Título do aplicativo
-st.title("Bora passar na prova , Lateral!! 😄")
+st.title("Bora passar na prova, Lateral!! 😄")
 
 # Instruções
 st.write("Por favor, escolha uma disciplina e o número do questionário no menu lateral.")
@@ -21,14 +22,17 @@ subtitulos_disciplinas = {
     "PAI": "Processos Avaliativos e Inovação"
 }
 
-# Função para carregar o arquivo CSV com as perguntas
-def carregar_perguntas(arquivo_csv):
+# Função para carregar o arquivo CSV com as perguntas a partir de uma URL do GitHub
+def carregar_perguntas(url_csv):
     try:
-        df = pd.read_csv(arquivo_csv, encoding='utf-8', sep=';')
+        response = requests.get(url_csv)
+        response.raise_for_status()  # Verifica se a requisição teve sucesso
+        # Lê o conteúdo diretamente em um DataFrame
+        df = pd.read_csv(StringIO(response.text), encoding='utf-8', sep=';')
         df.columns = df.columns.str.strip()  # Remove espaços dos nomes das colunas
         return df
-    except FileNotFoundError:
-        st.error(f"Arquivo '{arquivo_csv}' não encontrado. Verifique o nome do arquivo.")
+    except requests.exceptions.RequestException as e:
+        st.error(f"Erro ao baixar o arquivo CSV: {e}")
         st.stop()
     except pd.errors.EmptyDataError:
         st.error("O arquivo está vazio. Por favor, adicione perguntas.")
@@ -45,7 +49,7 @@ def obter_numeros_questionarios(disciplina_abreviacao):
     try:
         response = requests.get(url)
         response.raise_for_status()  # Verifica se a requisição teve sucesso
-        arquivos = response.json()  # Obtem a lista de arquivos como JSON
+        arquivos = response.json()  # Obtém a lista de arquivos como JSON
         
         # Filtra os arquivos com base na disciplina e no formato .csv
         numeros = [
